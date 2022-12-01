@@ -14,7 +14,7 @@ export default defineConfig({
       formats: ["es"],
     },
     rollupOptions: {
-      external: ["vue", "axios", "dayjs", "ant-design-vue"],
+      external: ["vue", "axios", "dayjs", "vue-i18n", "ant-design-vue"],
     },
   },
 });
