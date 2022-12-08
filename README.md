@@ -14,11 +14,10 @@ import { CCrud, CTable, CForm } from "@cimc/raffles-crud";
 
 ```
 provide(pluginKey, {
-  customCell: {
-    date: {
-      displayRender: ({ text }) => `date-${text}`,
-      editorRender: ({ text }) => `date-${text}`,
-    },
-  },
+  customType: {
+    [key: string]: {
+      new (column: CustomTableColumnProps): CustomRenderClass;
+    };
+  };
 });
 ```

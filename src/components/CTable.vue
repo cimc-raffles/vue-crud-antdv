@@ -42,6 +42,7 @@ export default defineComponent({
   setup(props, { attrs, slots }) {
     //plugin
     const pluginProps = inject<Crud.TablePluginProps>(pluginKey);
+    const customTypeRenderPlugins: { [key: string]: any } = {};
 
     const tableRef = ref(null);
 
@@ -222,14 +223,20 @@ export default defineComponent({
     const getCustomRender = (
       column: Crud.CustomTableColumnProps,
       displayRender?: Crud.CustomNodeRender,
-      editorRender?: Crud.CustomNodeRender
+      editorRender?: Crud.CustomNodeRender,
+      customRenderClass?: Crud.CustomRenderClass
     ) => {
       return (args: Crud.CustomRenderProps) => {
         const { text, record, index } = args;
         const { defaultValue, displayValue } = getCellDisplayValue(args);
         return [
-          isCurrentCell(column.dataIndex as string, index)
-            ? editorRender?.(args, column, computedDataSource) ||
+          column.editable && isCurrentCell(column.dataIndex as string, index)
+            ? editorRender?.(
+                args,
+                column,
+                computedDataSource,
+                customRenderClass
+              ) ||
               //@ts-ignore
               h(CField, {
                 type: column.type,
@@ -240,17 +247,19 @@ export default defineComponent({
                       originalDataSource.value = cloneDeep(
                         computedDataSource.value
                       );
-                    computedDataSource.value.splice(index, 1, {
-                      ...computedDataSource.value[index],
-                      [column.dataIndex as string]: value,
-                    });
+                    // @ts-ignore
+                    record[column.dataIndex] = value;
                   },
                   size: "small",
-                  value: defaultValue,
                   ...column.options,
                 },
               })
-            : displayRender?.(args, column, computedDataSource) || displayValue,
+            : displayRender?.(
+                args,
+                column,
+                computedDataSource,
+                customRenderClass
+              ) || displayValue,
         ];
       };
     };
@@ -333,14 +342,22 @@ export default defineComponent({
         }
 
         //plugin
-        if (column.type && pluginProps?.customCell?.[column.type]) {
-          const customNodeRender = pluginProps.customCell?.[column.type];
-          column.customCell = customCell;
-          column.customRender = getCustomRender(
-            column,
-            customNodeRender?.displayRender,
-            customNodeRender?.editorRender
-          );
+        if (column.type && pluginProps?.customType?.[column.type]) {
+          const customNodeRender = pluginProps.customType?.[column.type];
+          if (customNodeRender) {
+            column.customCell = customCell;
+            const customNodeRenderClass =
+              customTypeRenderPlugins[column.type] ||
+              new customNodeRender(column);
+            if (!customTypeRenderPlugins[column.type])
+              customTypeRenderPlugins[column.type] = customNodeRenderClass;
+            column.customRender = getCustomRender(
+              column,
+              customNodeRenderClass?.displayRender,
+              customNodeRenderClass?.editorRender,
+              customNodeRenderClass
+            );
+          }
         }
 
         return column;

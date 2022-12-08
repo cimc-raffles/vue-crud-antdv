@@ -71,14 +71,21 @@ export namespace Crud {
   type CustomNodeRender = (
     CustomRenderProps,
     CustomColumnType?,
-    DataSourceRenderParameter?
+    DataSourceRenderParameter?,
+    CustomRenderClass?
   ) => VNode;
 
+  class CustomRenderClass {
+    column: CustomTableColumnProps;
+    constructor(column: CustomTableColumnProps);
+    displayRender?: CustomNodeRender;
+    editorRender?: CustomNodeRender;
+  }
+
   interface TablePluginProps {
-    customCell: {
+    customType: {
       [key: string]: {
-        displayRender: CustomNodeRender;
-        editorRender: CustomNodeRender;
+        new (column: CustomTableColumnProps): CustomRenderClass;
       };
     };
   }
